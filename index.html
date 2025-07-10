@@ -1,0 +1,173 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>8人版打地鼠遊戲</title>
+  <style>
+    body {
+      font-family: "Noto Sans TC", Arial, sans-serif;
+      background: #f3f3f3;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    h1 {
+      margin: 30px 0 10px 0;
+    }
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 80px);
+      grid-gap: 20px;
+      justify-content: center;
+      margin: 30px 0;
+    }
+    .hole {
+      width: 80px;
+      height: 80px;
+      background: #ccc;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 6px 10px #bbb;
+    }
+    .person {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      cursor: pointer;
+      transition: transform 0.08s;
+      user-select: none;
+      object-fit: cover;
+      background: #fff;
+    }
+    #score {
+      font-size: 1.5em;
+      margin: 10px 0;
+    }
+    #start-btn {
+      padding: 10px 26px;
+      font-size: 1.1em;
+      background: #458bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>打地鼠遊戲（8人版）</h1>
+  <div id="score">分數: 0</div>
+  <button id="start-btn">開始遊戲</button>
+  <div id="game-board"></div>
+  <div id="timer"></div>
+  <script>
+    const headIcons = [
+      "person1.png",
+      "person2.png",
+      "person3.png",
+      "person4.png",
+      "person5.png",
+      "person6.png",
+      "person7.png",
+      "person8.png"
+    ];
+    const board = document.getElementById("game-board");
+    const scoreEl = document.getElementById("score");
+    const timerEl = document.getElementById("timer");
+    const startBtn = document.getElementById("start-btn");
+
+    const HOLE_COUNT = 8;
+    let score = 0;
+    let timeLeft = 30; // 遊戲時間（秒）
+    let timer;
+    let moleTimeouts = [];
+    let playing = false;
+
+    function makeBoard() {
+      board.innerHTML = "";
+      for (let i = 0; i < HOLE_COUNT; i++) {
+        const hole = document.createElement("div");
+        hole.className = "hole";
+        hole.dataset.idx = i;
+        board.appendChild(hole);
+      }
+    }
+
+    function showRandomPerson() {
+      // 隨機一格顯示隨機一位
+      const idx = Math.floor(Math.random() * HOLE_COUNT);
+      const personIdx = Math.floor(Math.random() * headIcons.length);
+      const holes = document.querySelectorAll(".hole");
+      const hole = holes[idx];
+
+      // 如果有舊的就先移除
+      hole.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = headIcons[personIdx];
+      img.className = "person";
+      img.onclick = () => {
+        if (!playing) return;
+        score++;
+        scoreEl.textContent = `分數: ${score}`;
+        img.style.transform = "scale(0.7)";
+        setTimeout(() => {
+          hole.innerHTML = "";
+        }, 100);
+      };
+      hole.appendChild(img);
+
+      // 幾百ms後人頭消失
+      const t = setTimeout(() => {
+        hole.innerHTML = "";
+      }, 800 + Math.random() * 400);
+      moleTimeouts.push(t);
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 30;
+      scoreEl.textContent = "分數: 0";
+      timerEl.textContent = "剩餘時間: 30 秒";
+      playing = true;
+      startBtn.disabled = true;
+
+      makeBoard();
+
+      function gameTick() {
+        if (!playing) return;
+        showRandomPerson();
+        if (timeLeft > 0) {
+          setTimeout(gameTick, 600);
+        }
+      }
+      gameTick();
+
+      timer = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `剩餘時間: ${timeLeft} 秒`;
+        if (timeLeft === 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      playing = false;
+      timerEl.textContent = "遊戲結束！";
+      startBtn.disabled = false;
+      // 清除所有地鼠
+      moleTimeouts.forEach(clearTimeout);
+      moleTimeouts = [];
+      document.querySelectorAll(".hole").forEach(h => h.innerHTML = "");
+    }
+
+    startBtn.onclick = startGame;
+    makeBoard();
+  </script>
+
+
+</body></html>
